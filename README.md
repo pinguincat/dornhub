@@ -4,10 +4,14 @@ This is an [Expo](https://expo.dev) project demonstrating how to use Apify scrap
 
 This app relies on the following Apify actors to scrape Pornhub data:
 
-- [Pornhub Channel Data Extractor](https://apify.com/pintxuki/pornhub-channel-extractor)
-- [Pornhub Video (Downloader)](https://apify.com/pintxuki/pornhub-video-extractor)
+- [Pornhub Channel Data Extractor](https://apify.com/pintxuki/pornhub-channel-extractor): Fetches general channel information and video list.
+- [Pornhub Video (Downloader)](https://apify.com/pintxuki/pornhub-video-extractor): Fetches detailed video information, including metadata and download links.
 
 _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms of service._
+
+<video src="assets/videos/preview-video.mp4" width="320" controls>
+  Your browser does not support the video tag.
+</video>
 
 ## Features
 
@@ -16,6 +20,7 @@ _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms
 - Allows navigation to a video detail screen (placeholder).
 - Uses TanStack Query for data fetching and caching.
 - Includes pull-to-refresh functionality.
+- Uses SQLite for offline data caching.
 
 ## Technology Stack
 
@@ -23,6 +28,7 @@ _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms
 - TypeScript
 - Apify (for Pornhub data scraping)
 - TanStack Query (React Query)
+- SQLite (via expo-sqlite)
 
 ## Get started
 
@@ -34,7 +40,7 @@ _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms
    cp .env.example .env
    ```
 
-   Open the `.env` file and replace the placeholder values for `EXPO_PUBLIC_APIFY_TOKEN` and `EXPO_PUBLIC_CHANNEL_URL` with your actual Apify token and the target channel URL. The Actor IDs are pre-configured for this example.
+   Open the `.env` file and add your `EXPO_PUBLIC_APIFY_TOKEN`. The `EXPO_PUBLIC_CHANNEL_URL` and Actor IDs for the Apify actors listed above are pre-configured in the `.env.example` and used by the hooks (`hooks/onGetChannelInfo.ts`, `hooks/onGetChannelVideos.ts`, etc.). You only need to change the Channel URL if you want to target a different channel.
 
 2. Install dependencies
 
@@ -56,12 +62,6 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Apify Integration
-
-This app relies on Apify actors to scrape Pornhub data. You will need to configure the Apify client or the specific hooks (`hooks/onGetChannelInfo.ts`, `hooks/onGetChannelVideos.ts`) with your Apify token. The actor IDs for the Apify actors listed above are pre-configured in the `.env.example` and used by the hooks.
-
-_Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms of service._
 
 ## Video Playback and Conversion
 
