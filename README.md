@@ -2,7 +2,7 @@
 
 This is an [Expo](https://expo.dev) project demonstrating how to use Apify scrapers within a React Native application. It fetches data from a Ph channel scraper and displays the channel information and video list.
 
-![App Preview](assets/images/preview.png)
+![App Preview](assets/images/preview-image.png)
 
 This app relies on the following Apify actors to scrape Pornhub data:
 
