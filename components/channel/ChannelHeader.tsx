@@ -1,6 +1,13 @@
 import React from "react";
-import { View, Text, StyleSheet, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
 import { IChannelInfo } from "../../types/channel";
+import { MaterialIcons } from "@expo/vector-icons";
 
 interface Props {
   info: IChannelInfo;
@@ -15,6 +22,23 @@ export const ChannelHeader: React.FC<Props> = ({ info }) => {
       return (num / 1000).toFixed(1) + "K";
     }
     return num.toString();
+  };
+
+  const handleSocialLinkPress = async (url: string) => {
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    }
+  };
+
+  const renderDetail = (label: string, value?: string) => {
+    if (!value) return null;
+    return (
+      <View style={styles.detailRow}>
+        <Text style={styles.detailLabel}>{label}:</Text>
+        <Text style={styles.detailValue}>{value}</Text>
+      </View>
+    );
   };
 
   return (
@@ -43,26 +67,63 @@ export const ChannelHeader: React.FC<Props> = ({ info }) => {
         </View>
       </View>
 
-      <Text style={styles.about}>{info.about}</Text>
+      {info.about && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.about}>{info.about}</Text>
+        </View>
+      )}
 
-      <View style={styles.details}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Gender:</Text>
-          <Text style={styles.detailValue}>{info.gender}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>From:</Text>
-          <Text style={styles.detailValue}>{info.birth_place}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Height:</Text>
-          <Text style={styles.detailValue}>{info.height}</Text>
-        </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Weight:</Text>
-          <Text style={styles.detailValue}>{info.weight}</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Details</Text>
+        <View style={styles.details}>
+          {renderDetail("Gender", info.gender)}
+          {renderDetail("From", info.birth_place)}
+          {renderDetail("Height", info.height)}
+          {renderDetail("Weight", info.weight)}
+          {renderDetail("Ethnicity", info.ethnicity)}
+          {renderDetail("Hair Color", info.hair_color)}
+          {renderDetail("Relationship", info.relationship_status)}
+          {renderDetail("Interested In", info.interested_in)}
+          {renderDetail("Fake Boobs", info.fake_boobs)}
+          {renderDetail("Tattoos", info.tattoos)}
+          {renderDetail("Piercings", info.piercings)}
         </View>
       </View>
+
+      {info.interests_and_hobbie && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Interests & Hobbies</Text>
+          <Text style={styles.detailValue}>{info.interests_and_hobbie}</Text>
+        </View>
+      )}
+
+      {info.turn_ons && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Turn Ons</Text>
+          <Text style={styles.detailValue}>{info.turn_ons}</Text>
+        </View>
+      )}
+
+      {info.social_links && info.social_links.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Social Links</Text>
+          <View style={styles.socialLinks}>
+            {info.social_links.map((link, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.socialLink}
+                onPress={() => handleSocialLinkPress(link)}
+              >
+                <MaterialIcons name="link" size={16} color="#FF9500" />
+                <Text style={styles.socialLinkText} numberOfLines={1}>
+                  {link}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -71,13 +132,12 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     backgroundColor: "#18181b",
-    marginBottom: 16,
+    gap: 16,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
   },
   profileInfo: {
     flexDirection: "row",
@@ -104,30 +164,35 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginBottom: 16,
     paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#18181b",
+    backgroundColor: "#27272a",
+    borderRadius: 16,
   },
   statItem: {
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
     color: "#FFFFFF",
   },
   statLabel: {
-    fontSize: 14,
+    fontSize: 12,
     color: "#999",
+  },
+  section: {
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#FFFFFF",
   },
   about: {
     fontSize: 14,
     lineHeight: 20,
     color: "#CCCCCC",
-    marginBottom: 16,
   },
   details: {
     gap: 8,
@@ -136,7 +201,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   detailLabel: {
-    width: 80,
+    width: 100,
     fontSize: 14,
     color: "#999",
   },
@@ -144,5 +209,21 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: "#CCCCCC",
+  },
+  socialLinks: {
+    gap: 8,
+  },
+  socialLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 8,
+    backgroundColor: "#27272a",
+    borderRadius: 8,
+  },
+  socialLinkText: {
+    flex: 1,
+    color: "#FF9500",
+    fontSize: 14,
   },
 });

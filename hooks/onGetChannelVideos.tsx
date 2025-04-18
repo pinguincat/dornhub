@@ -1,7 +1,13 @@
-import { useQuery, QueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  QueryClient,
+  UseQueryOptions,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { GenericApifyResponse, IVideo } from "../types/channel";
 import { DatabaseService } from "../services/database";
 import { runApifyActor } from "../services/apify";
+import { videos as fakeChannelVideos } from "./fakeData"; // Import fake data
 
 // Define the structure of the wrapper object returned by Apify
 interface IApifyVideoResponse {
@@ -12,99 +18,143 @@ interface IApifyVideoResponse {
   limit: number;
   desc: boolean;
 }
-
+const devMode = false;
 const CHANNEL_ACTOR_ID = "l77msWN82uo0IQFfw";
-export const CHANNEL_URL =
-  process.env.EXPO_PUBLIC_CHANNEL_URL || "YOUR_CHANNEL_URL_HERE";
 
-const queryKey = ["channelVideos", CHANNEL_URL];
+// Helper function to simulate delay
+const simulateDelay = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Fetches fresh channel videos from Apify, saves to DB, and updates React Query cache.
+ * @param queryClient The React Query client instance.
+ * @param channelUrl The URL of the channel to fetch videos for.
  */
-export async function fetchAndCacheChannelVideos(queryClient: QueryClient) {
+export async function fetchAndCacheChannelVideos(
+  queryClient: QueryClient,
+  channelUrl: string
+): Promise<IVideo[] | undefined> {
   const db = DatabaseService.getInstance();
-  const actorInput = {
-    startUrls: [{ url: CHANNEL_URL, method: "GET" }],
-    type: "VIDEOS",
-    nameDataset: false,
-    maxRequestsPerCrawl: 15, // Or your desired limit for refresh
-    proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] },
-  };
+  const queryKey = ["channelVideos", channelUrl];
 
-  try {
-    // Expect an array containing potentially mixed types
-    const results = await runApifyActor<GenericApifyResponse<IVideo>>({
-      actorId: CHANNEL_ACTOR_ID,
-      input: actorInput,
-    });
+  // Clear existing caches
+  await db.clearChannelVideos();
+  queryClient.removeQueries({ queryKey: ["channelVideos"] });
 
-    const videos = results[0]?.items ?? results[0];
+  if (devMode) {
+    await simulateDelay(500);
+    const dataToSave: IVideo[] = [...fakeChannelVideos];
+    await db.saveChannelVideos(dataToSave);
+    queryClient.setQueryData(queryKey, dataToSave);
+    return dataToSave;
+  } else {
+    const actorInput = {
+      startUrls: [{ url: channelUrl, method: "GET" }],
+      type: "VIDEOS",
+      nameDataset: false,
+      maxRequestsPerCrawl: 15, // Adjust as needed
+      proxyConfiguration: { useApifyProxy: true, apifyProxyGroups: [] },
+    };
 
-    await db.saveChannelVideos(videos); // Save the extracted videos
+    try {
+      const results = await runApifyActor<GenericApifyResponse<IVideo>>({
+        actorId: CHANNEL_ACTOR_ID,
+        input: actorInput,
+      });
 
-    // Update React Query cache with the extracted videos
-    queryClient.setQueryData(queryKey, videos);
-  } catch (error) {
-    throw error; // Re-throw error to be caught by onRefresh handler
+      // We have to get all, but not the last one.
+      const videos =
+        results?.[results?.length - 1]?.items ?? results?.slice(0, -1);
+      await db.saveChannelVideos(videos);
+
+      // Update React Query cache with the extracted videos for this specific URL
+      queryClient.setQueryData(queryKey, videos);
+      return videos as IVideo[];
+    } catch (error) {
+      console.error(
+        `Error fetching/caching channel videos for ${channelUrl}:`,
+        error
+      );
+      throw error; // Re-throw error to be caught by onRefresh handler
+    }
   }
 }
 
 /**
  * React Query hook to get channel videos (checks DB cache first).
+ * @param channelUrl The URL of the channel to get videos for. Null if no URL is active.
  */
-export default function onGetChannelVideos() {
-  return useQuery<IVideo[]>({
+export default function onGetChannelVideos(channelUrl: string | null) {
+  const queryKey = ["channelVideos", channelUrl] as const;
+  const queryClient = useQueryClient();
+  const db = DatabaseService.getInstance();
+
+  const queryOptions: UseQueryOptions<
+    IVideo[] | undefined,
+    Error,
+    IVideo[] | undefined,
+    typeof queryKey
+  > = {
     queryKey: queryKey,
-    queryFn: async () => {
-      const db = DatabaseService.getInstance();
-
-      // Try to get from cache first (for offline/standard load)
-      const cachedData = await db.getChannelVideos();
-      if (cachedData.length > 0) {
-        return cachedData;
+    queryFn: async (): Promise<IVideo[] | undefined> => {
+      if (!channelUrl) {
+        return undefined;
       }
 
-      if (CHANNEL_URL === "YOUR_CHANNEL_URL_HERE") {
-        throw new Error("Channel URL is not configured for initial fetch.");
-      }
-      const actorInput = {
-        startUrls: [{ url: CHANNEL_URL }],
-        type: "VIDEOS",
-        nameDataset: false,
-        maxRequestsPerCrawl: 15, // Match refresh or use different initial limit
-        proxyConfiguration: { useApifyProxy: true },
-      };
+      // If we're fetching new data, don't check cache
+      if (queryClient.getQueryState(queryKey)?.data === undefined) {
+        if (devMode) {
+          await simulateDelay(500);
+          const dataToSave: IVideo[] = [...fakeChannelVideos];
+          await db.saveChannelVideos(dataToSave);
+          return dataToSave;
+        } else {
+          const actorInput = {
+            startUrls: [{ url: channelUrl }],
+            type: "VIDEOS",
+            nameDataset: false,
+            maxRequestsPerCrawl: 15,
+            proxyConfiguration: { useApifyProxy: true },
+          };
 
-      // Expect an array containing potentially mixed types
-      const results = await runApifyActor<unknown[]>({
-        actorId: CHANNEL_ACTOR_ID,
-        input: actorInput,
-      });
+          const results = await runApifyActor<GenericApifyResponse<IVideo>>({
+            actorId: CHANNEL_ACTOR_ID,
+            input: actorInput,
+          });
 
-      let extractedData: IVideo[] = [];
-      if (Array.isArray(results)) {
-        for (const item of results) {
-          // Check if item is an object and has an 'items' property that is an array
-          if (
-            item &&
-            typeof item === "object" &&
-            "items" in item &&
-            Array.isArray((item as any).items)
-          ) {
-            // If it matches the structure, cast via unknown first, then assign
-            extractedData = (item as unknown as IApifyVideoResponse).items;
-            break; // Stop after finding the first match
+          const videos =
+            results?.[results?.length - 1]?.items ?? results?.slice(0, -1);
+          if (!videos || videos.length === 0) {
+            console.warn(
+              `Apify actor ${CHANNEL_ACTOR_ID} did not return video results on initial fetch for ${channelUrl}`
+            );
+            return undefined;
           }
+
+          await db.saveChannelVideos(videos);
+          return videos;
         }
       }
-      const data: IVideo[] = extractedData;
 
-      await db.saveChannelVideos(data);
+      // Only check DB cache if we're not fetching new data
+      const cachedDbData = await db.getChannelVideos();
 
-      return data;
+      if (cachedDbData && cachedDbData.length > 0) {
+        return cachedDbData;
+      }
+
+      return undefined;
     },
+    enabled: !!channelUrl,
     staleTime: 24 * 60 * 60 * 1000,
     cacheTime: 7 * 24 * 60 * 60 * 1000,
-  });
+    refetchOnWindowFocus: false,
+  };
+
+  return useQuery<
+    IVideo[] | undefined,
+    Error,
+    IVideo[] | undefined,
+    typeof queryKey
+  >(queryOptions);
 }

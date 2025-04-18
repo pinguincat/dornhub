@@ -53,7 +53,6 @@ export const VideoPreview: React.FC<Props> = ({ video }) => {
 
   const sourceUri = useMemo(() => {
     const uri = currentVideo.video_download || null;
-    console.log("[VideoPreview] Calculated sourceUri:", uri);
     return uri;
   }, [currentVideo.video_download]);
 

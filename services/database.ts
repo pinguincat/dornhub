@@ -1,6 +1,10 @@
 import * as SQLite from "expo-sqlite";
 import { IChannelInfo, IVideo, IVideoPreview } from "../types/channel";
 
+type SQLiteTransaction = {
+  executeSql: (sqlStatement: string, args?: any[]) => void;
+};
+
 export class DatabaseService {
   private static instance: DatabaseService;
   private db: SQLite.SQLiteDatabase | null = null;
@@ -44,6 +48,12 @@ export class DatabaseService {
 
       CREATE TABLE IF NOT EXISTS video_previews (
         video_id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        last_updated INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS channel_analytics (
+        id TEXT PRIMARY KEY,
         data TEXT NOT NULL,
         last_updated INTEGER NOT NULL
       );
@@ -136,6 +146,29 @@ export class DatabaseService {
     };
   }
 
+  public async saveChannelAnalytics(analytics: any): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    await this.db.runAsync(
+      "INSERT OR REPLACE INTO channel_analytics (id, data, last_updated) VALUES (?, ?, ?)",
+      "main",
+      JSON.stringify(analytics),
+      Date.now()
+    );
+  }
+
+  public async getChannelAnalytics(): Promise<any | null> {
+    if (!this.db) throw new Error("Database not initialized");
+
+    const result = await this.db.getFirstAsync<{ data: string }>(
+      "SELECT data FROM channel_analytics WHERE id = ? AND last_updated > ?",
+      "main",
+      Date.now() - 24 * 60 * 60 * 1000 // 24 hours cache
+    );
+
+    return result ? JSON.parse(result.data) : null;
+  }
+
   /**
    * Clears all data from the database tables.
    */
@@ -147,10 +180,26 @@ export class DatabaseService {
       await this.db.execAsync("DELETE FROM channel_info");
       await this.db.execAsync("DELETE FROM channel_videos");
       await this.db.execAsync("DELETE FROM video_previews");
+      await this.db.execAsync("DELETE FROM channel_analytics");
       await this.db.execAsync("COMMIT");
     } catch (error) {
       await this.db.execAsync("ROLLBACK");
       throw error; // Re-throw the error after logging
     }
+  }
+
+  public async clearChannelInfo(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+    await this.db.execAsync("DELETE FROM channel_info");
+  }
+
+  public async clearChannelVideos(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+    await this.db.execAsync("DELETE FROM channel_videos");
+  }
+
+  public async clearChannelAnalytics(): Promise<void> {
+    if (!this.db) throw new Error("Database not initialized");
+    await this.db.execAsync("DELETE FROM channel_analytics");
   }
 }

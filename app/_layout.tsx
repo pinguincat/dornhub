@@ -74,6 +74,13 @@ export default function RootLayout() {
               animation: "slide_from_bottom",
             }}
           />
+          <Stack.Screen
+            name="analytics"
+            options={{
+              presentation: "modal",
+              animation: "slide_from_bottom",
+            }}
+          />
           <Stack.Screen name="+not-found" options={{ title: "Not Found" }} />
         </Stack>
         <StatusBar style="light" />

@@ -1,30 +1,38 @@
-# Dornhub - Ph Channel Viewer (React Native + Apify Example)
+# Dornhub - Pornhub Model Analytics & Viewer (React Native + Apify Example)
 
-This is an [Expo](https://expo.dev) project demonstrating how to use Apify scrapers within a React Native application. It fetches data from a Ph channel scraper and displays the channel information and video list.
+This is an [Expo](https://expo.dev) project demonstrating how to use Apify scrapers and Gemini AI within a React Native application. It fetches data from a Pornhub model page, analyzes the content using Gemini AI, and provides comprehensive analytics about model performance and content strategy.
 
-![App Preview](assets/images/preview-image.png)
+![App Preview](assets/images/preview-app.png)
 
-This app relies on the following Apify actors to scrape Pornhub data:
+This app relies on the following technologies:
 
-- [Pornhub Channel Data Extractor](https://apify.com/pintxuki/pornhub-channel-extractor): Fetches general channel information and video list.
+- [Pornhub Model Data Extractor](https://apify.com/pintxuki/pornhub-channel-extractor): Fetches general model information and video list.
 - [Pornhub Video (Downloader)](https://apify.com/pintxuki/pornhub-video-extractor): Fetches detailed video information, including metadata and download links.
+- [Gemini AI](https://ai.google.dev/): Analyzes model content and provides performance insights.
 
 _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms of service._
 
 ## Features
 
-- Fetches and displays channel information (name, description, stats, etc.).
-- Fetches and displays a list of videos from the channel.
-- Allows navigation to a video detail screen (placeholder).
-- Uses TanStack Query for data fetching and caching.
-- Includes pull-to-refresh functionality.
-- Uses SQLite for offline data caching.
+- Fetches and displays model information (name, description, stats, etc.)
+- Fetches and displays a list of videos from the model page
+- Advanced analytics powered by Gemini AI:
+  - Performance metrics (views, likes, engagement rates)
+  - Category and tag performance analysis
+  - Model attributes impact analysis
+  - Optimal posting times recommendations
+  - AI-powered content strategy suggestions
+  - Video performance ranking
+- Uses TanStack Query for data fetching and caching
+- Includes pull-to-refresh functionality
+- Uses SQLite for offline data caching
 
 ## Technology Stack
 
 - React Native / Expo
 - TypeScript
 - Apify (for Pornhub data scraping)
+- Gemini AI (for content analysis)
 - TanStack Query (React Query)
 - SQLite (via expo-sqlite)
 
@@ -38,7 +46,10 @@ _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms
    cp .env.example .env
    ```
 
-   Open the `.env` file and add your `EXPO_PUBLIC_APIFY_TOKEN`. The `EXPO_PUBLIC_CHANNEL_URL` and Actor IDs for the Apify actors listed above are pre-configured in the `.env.example` and used by the hooks (`hooks/onGetChannelInfo.ts`, `hooks/onGetChannelVideos.ts`, etc.). You only need to change the Channel URL if you want to target a different channel.
+   Open the `.env` file and add your:
+
+   - `EXPO_PUBLIC_APIFY_TOKEN`
+   - `EXPO_PUBLIC_GEMINI_API_KEY`
 
 2. Install dependencies
 
@@ -49,10 +60,10 @@ _Note: Ensure your use of scraped data complies with Apify's and Pornhub's terms
 3. Start the app
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+In the output, you'll find options to open the app in a:
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
 - [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
@@ -60,6 +71,31 @@ In the output, you'll find options to open the app in a
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Analytics Features
+
+The app provides comprehensive analytics for the last 5, 10, or 15 videos of a model channel, including:
+
+- **Performance Metrics**
+
+  - Average views, likes, dislikes, and favorites
+  - Engagement and favorite rates
+  - View-to-engagement ratio
+  - Peak performance time
+  - Best performing video analysis
+
+- **Content Analysis**
+
+  - Category performance and distribution
+  - Tag performance and optimization
+  - Model attributes impact
+  - Optimal posting times
+
+- **AI Recommendations**
+  - Content strategy suggestions
+  - Model attributes optimization
+  - Posting schedule recommendations
+  - Tag optimization tips
 
 ## Video Playback and Conversion
 
@@ -75,7 +111,7 @@ Replace `'YOUR_VIDEO_DOWNLOAD_URL'` with the actual download URL obtained from t
 
 **Important Note:** Integrating this conversion directly into the React Native app is currently not feasible, as the `react-native-ffmpeg-kit` library has been discontinued.
 
-**Disclaimer:** This project is intended for educational purposes only, demonstrating the integration of React Native with Apify. Downloading copyrighted material may violate terms of service or copyright laws. Proceed responsibly.
+**Disclaimer:** This project is intended for educational purposes only, demonstrating the integration of React Native with Apify and Gemini AI. Downloading copyrighted material may violate terms of service or copyright laws. Proceed responsibly.
 
 ## Learn more
 
